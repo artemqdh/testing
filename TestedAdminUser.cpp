@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <string.h>
 
+
 void Display_Questions(std::string questions_folder) // Displays questions from folder in files
 {
 	for (const auto& file : std::filesystem::directory_iterator(questions_folder))
@@ -83,22 +84,21 @@ void StartTest(std::string answers_folder) // start test + statistic in %
 class Test
 {
 public:
-	Test(std::string name_test1, std::string name_file_test_question1, std::string name_file_test_answer1, std::string category1)
+	Test(std::string name_file_test_question1, std::string name_file_test_answer1,std::string correct_answer1, std::string category1)
 	{
-		name_test = name_test1;
 		name_file_test_question = name_file_test_question1;
 		name_file_test_answer = name_file_test_answer1;
+		correct_answer = correct_answer1;
 		category = category1;
 	}
 
 private:
-	std::string name_test;
 	std::string name_file_test_question;
 	std::string name_file_test_answer;
 	std::string category;
+	std::string correct_answer;
 	std::string name_statistics_test;
 };
-
 
 std::map <std::string, std::vector<Test>> category_and_all_test;
 
@@ -106,29 +106,51 @@ class User
 {
 public:
 	virtual void Registration() = 0;
-	virtual bool Check_login() = 0;
-	virtual bool Check_pass() = 0;
+	virtual bool Check_login(std::string login1) = 0;
+	virtual bool Check_pass(std::string pass1) = 0;
 };
 
 class Admin : public User
 {
 public:
-	void Registration() override // i dont have singleton
+	void Registration() override
 	{
+		bool isEmptyFile = !std::filesystem::exists(name_login_pass_file) || std::filesystem::is_empty(name_login_pass_file);
 		std::ofstream file1(name_login_pass_file, std::ios::app);
+		
 		if (file1.is_open())
 		{
-			std::string login1, pass1;
-			std::cout << "Login and password: " << std::endl;
-			std::cin >> login1 >> pass1;
+			if (isEmptyFile)
+			{
+				std::string login1, pass1;
+				std::cout << "Login and password: " << std::endl;
+				std::cin >> login1 >> pass1;
 
-			file1 << GetCrypt(login1) << " " << GetCrypt(pass1) << std::endl;
-			file1.close();
+				file1 << GetCrypt(login1) << " " << GetCrypt(pass1) << std::endl;
+				file1.close();
+			}
 		}
 	}
 	
+	bool Check()
+	{
+		std::cout << "Login and password: ";
+		std::string login1;
+		std::string pass1;
+		std::cin >> login1 >> pass1;
+		if (Check_login(login1) && Check_pass(pass1))
+		{
+			std::cout << "Welcome " << login1 << "!" << std::endl;
+			return true;
+		}
+		else
+		{
+			std::cout << "Wrong login or password." << std::endl;
+			return false;
+		}
+	}
 
-	bool Check_login() override // not finished
+	bool Check_login(std::string login1) override
 	{
 		std::ifstream file1(name_login_pass_file);
 		std::string line;
@@ -151,10 +173,18 @@ public:
 			}
 		}
 		std::string word = Encryption(a);
-		return true;
+
+		if (login1 == word)
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
 	}
 	
-	bool Check_pass() override // not finished
+	bool Check_pass(std::string pass1) override
 	{
 		std::ifstream file1(name_login_pass_file);
 		std::string line;
@@ -174,7 +204,15 @@ public:
 			}
 		}
 		std::string word = Encryption(b);
-		return true;
+
+		if (pass1 == word)
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
 	}
 
 	std::string Encryption(std::string word)
@@ -187,55 +225,100 @@ public:
 		return a;
 	}
 
-	void Add_Test(std::string foldername)
+	void Add_Test() 
 	{
-		std::cout << "Enter the new name: ";
-		std::string new_name;
-		std::getline(std::cin, new_name);
-
-		std::cout << "Enter the new question: ";
-		std::string new_question;
-		std::getline(std::cin, new_question);
-
-		std::cout << "Enter the new answer: ";
-		std::string new_answer;
-		std::getline(std::cin, new_answer);
-
 		std::cout << "Enter the new category: ";
 		std::string new_category;
-		std::getline(std::cin, new_category);
+		std::getline(std::cin >> std::ws, new_category);
 
-		Test new_test(new_name, new_question, new_answer, new_category);
+		std::filesystem::create_directories(new_category);
+		std::filesystem::create_directories(new_category + "/questions");	// all folders for example mathematics -> answers and questions
+		std::filesystem::create_directories(new_category + "/answers");
 
-		category_and_all_test[new_category].push_back(new_test);
+		std::cout << "How many questions do you want to add?" << std::endl;
+		int num_questions = 0;
+		std::cin >> num_questions;
 
-		std::string filename = foldername + "/" + new_category + ".txt";
-		std::ofstream file1(filename, std::ios::app);
-		if (file1.is_open())
+		int question_number = 1;
+
+		for (int i = 0; i < num_questions; ++i) 
 		{
-			file1 << new_name << " " << new_question << std::endl << new_answer << std::endl;
-			file1.close();
-			std::cout << "Test added successfully." << std::endl;
+			std::cout << "Enter the new question: ";
+			std::string new_question;
+			std::getline(std::cin >> std::ws, new_question);
+
+			std::cout << "Enter the new answers (separated by -): ";
+			std::string new_answers;
+			std::getline(std::cin >> std::ws, new_answers);
+
+			std::cout << "Enter the correct answer: ";
+			std::string correct_answer;
+			std::getline(std::cin >> std::ws, correct_answer);
+
+			std::string question_filename = new_category + "/questions/question" + std::to_string(question_number) + ".txt";	// for example
+			std::string answer_filename = new_category + "/answers/answer" + std::to_string(question_number) + ".txt";			// mathematics/questions/question1.txt
+
+			std::ofstream question_file(question_filename);
+			std::ofstream answer_file(answer_filename);
+
+			if (question_file.is_open() && answer_file.is_open()) 
+			{
+				question_file << new_question << std::endl;
+				question_file << new_answers << std::endl;
+				answer_file << correct_answer << std::endl;
+				std::cout << "Question and answer was successfully added." << std::endl;
+			}
+			else 
+			{
+				std::cout << "Error. File is not open." << std::endl;
+			}
+			++question_number; // question1 -> question2 // answer1 -> answer2
+		}
+	}
+
+	void Delete_Test()
+	{
+		std::cout << "Enter the category name to delete: ";
+		std::string category_name;
+		std::getline(std::cin >> std::ws, category_name);
+		if (std::filesystem::exists(category_name) && std::filesystem::is_directory(category_name))	// check if folder exists
+		{
+			std::filesystem::remove_all(category_name);
+			std::cout << category_name << " was successfully deleted." << std::endl;
 		}
 		else
 		{
-			std::cout << "Error. Something went wrong." << std::endl;
+			std::cout << "Error. " << category_name << " does not exist." << std::endl;
 		}
 	}
 
-	void Delete_Test(std::string question)
+	void Delete_Tested() 
 	{
-		
-	}
+		std::cout << "Who do you want to delete? (name_family)" << std::endl;
+		std::string name1;
+		std::cin >> name1;
 
-	void Add_Tested()
-	{
+		std::string name_file = "all_users/" + name1 + ".txt";
+		std::string login_file = "all_users/login_" + name1 + ".txt";
 
-	}
+		if (std::filesystem::exists(name_file)) 
+		{
+			std::filesystem::remove(name_file);
+			std::cout << name1 << " was successfully deleted." << std::endl;	// for example: deleted artem_galimov.txt
+		}
+		else 
+		{
+			std::cout << "Error. " << name1 << " does not exist." << std::endl;
+		}
 
-	void Delete_Tested(std::string tested_login)
-	{
-		
+		if (std::filesystem::exists(login_file)) 
+		{
+			std::filesystem::remove(login_file);
+			std::cout << "login_" << name1 << " was successfully deleted." << std::endl;	// for example: deleted login_artem_galimov.txt
+		}
+		else {
+			std::cout << "Error. " << name1 << " does not exist." << std::endl;
+		}
 	}
 
 private:
@@ -271,9 +354,7 @@ public:
 		std::string adress1;
 		std::int32_t phonenum1;
 		std::cout << "Name (name_family), adress and phonenum(maximum 9 digits): " << std::endl;
-		std::cin >> name1; 
-		std::getline(std::cin >> std::ws, adress1);
-		std::cin >> phonenum1;
+		std::cin >> name1 >> adress1 >> phonenum1;
 
 		std::ofstream file2("all_users/" + name1 + ".txt", std::ios::app); // all_users = folder // example = all_users/artem_galimov.txt
 		if (file2.is_open())
@@ -287,7 +368,7 @@ public:
 		{
 			std::string login1;
 			std::string pass1;
-			std::cout << "Login and password: " << std::endl;
+			std::cout << "Create login and password: " << std::endl;
 			std::cin >> login1 >> pass1;
 
 			file1 << GetCrypt(login1) << " " << GetCrypt(pass1) << std::endl;
@@ -297,60 +378,115 @@ public:
 		{
 			std::cout << "File not open!" << std::endl;
 		}
+		std::cout << "Success! Now you can do tests." << std::endl;
 	}
 
-	bool Check_login() override // not finished
+	bool Check()
 	{
-		std::cout << "Login and password: ";
-		std::string login1;
-		std::string pass1;
-		std::cin >> login1 >> pass1;
-		
-		std::ifstream file1(name_login_pass_file);
-		std::string line;
-		std::string a;
-		while (getline(file1, line))
-		{
-			a = line;
-		}
+		std::cout << "Name(name_family): ";
+		std::string name1;
+		std::cin >> name1;
+		name = name1;
 
-		std::string b;
-		for (int i = 0; i < a.size(); ++i)
+		std::ifstream file1("all_users/login_" + name1 + ".txt");
+		if (file1.is_open())
 		{
-			if (a[i] != ' ')
+			std::cout << "Login and password: ";
+			std::string login1;
+			std::string pass1;
+			std::cin >> login1 >> pass1;
+
+			if (Check_login(login1) && Check_pass(pass1))
 			{
-				b += a[i];
+				std::cout << "Welcome " << login1 << "!" << std::endl;
+				return true;
 			}
-			else if (a[i] == ' ')
+			else
 			{
-				a = b;
+				std::cout << "Wrong login or password." << std::endl;
+				return false;
 			}
 		}
-		std::string word = Encryption(a);
-		return true;
+		name.clear();
 	}
 
-	bool Check_pass() override // not finished
+	bool Check_login(std::string login1) override
 	{
-		std::ifstream file1(name_login_pass_file);
-		std::string line;
-		std::string a;
-		while (getline(file1, line))
+		std::ifstream file1("all_users/login_" + name + ".txt");
+		if (file1.is_open())
 		{
-			a = line;
-		}
-
-		std::string b;
-		for (int i = 0; i < a.size(); ++i)
-		{
-			if (a[i] == ' ')
+			std::string line;
+			std::string a;
+			while (getline(file1, line))
 			{
-				++i;
-				b = a.substr(i);
+				a = line;
+			}
+
+
+			std::string b;
+			for (int i = 0; i < a.size(); ++i)
+			{
+				if (a[i] != ' ')
+				{
+					b += a[i];
+				}
+				else if (a[i] == ' ')
+				{
+					a = b;
+				}
+			}
+
+			std::string word = Encryption(a);
+			if (login1 == word)
+			{
+				return true;
+			}
+			else
+			{
+				return false;
 			}
 		}
-		std::string word = Encryption(b);
-		return true;
+		else
+		{
+			return false;
+		}
+	}
+
+	bool Check_pass(std::string pass1) override
+	{
+		std::ifstream file1("all_users/login_" + name + ".txt");
+		if (file1.is_open())
+		{
+			std::string line;
+			std::string a;
+			while (getline(file1, line))
+			{
+				a = line;
+			}
+
+			std::string b;
+			for (int i = 0; i < a.size(); ++i)
+			{
+				if (a[i] == ' ')
+				{
+					++i;
+					b = a.substr(i);
+				}
+			}
+			std::string word = Encryption(b);
+			if (pass1 == word)
+			{
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+		else
+		{
+			return false;
+		}
 	}
 
 	std::string Encryption(std::string word)
@@ -374,8 +510,6 @@ private:
 		return a_login;
 	}
 	std::string name;
-	std::string address;
-	std::int32_t phone_number;
 	std::string name_person_data_file;
 	std::string name_statistics_file;
 	std::string name_login_pass_file;
@@ -397,41 +531,87 @@ int main()
 
 	switch (num1)
 	{
+	case 1:
+	{
+		b.Registration();
+		b.Check();
+
+		std::cout << "1 - Add Test\n2 - Delete Test\n3 - Delete Tested" << std::endl;
+		int num5 = 0;
+		std::cin >> num5;
+		
+		switch (num5)
+		{
+			case 1:
+			{
+				b.Add_Test();
+				break;
+			}
+			case 2:
+			{
+				b.Delete_Test();
+				break;
+			}
+			case 3:
+			{
+				b.Delete_Tested();
+				break;
+			}
+		}
+		break;
+	}
+	case 2:
+	{
+		std::cout << "Do you want to 1 - registrate or 2 - login?" << std::endl;
+		int num2 = 0;
+		std::cin >> num2;
+
+		switch (num2)
+		{
 		case 1:
 		{
-			b.Registration();
+			a.Registration();
 			break;
-	    }
+		}
 		case 2:
 		{
-			a.Registration();
-
-			std::cout << "What test do you want to start?" << std::endl;
-			std::cout << "1 - basic_knowledge, 2 - mathematics and 3 - football" << std::endl;
-			int num = 0;
-			std::cin >> num;
-			system("cls");
-			switch (num)
+			if (a.Check())
 			{
-				case 1:
+				std::cout << "What test do you want to start?" << std::endl;
+				std::cout << "1 - basic_knowledge, 2 - mathematics, 3 - football and 4 - biology" << std::endl;
+				int num = 0;
+				std::cin >> num;
+				system("cls");
+				switch (num)
 				{
-					Display_Questions("basic_knowledge/questions");
-					StartTest("basic_knowledge/answers");
-					break;
-				}
-				case 2:
-				{
-					Display_Questions("mathematics/questions");
-					StartTest("mathematics/answers");
-					break;
-				}
-				case 3:
-				{
-					Display_Questions("football/questions");
-					StartTest("football/answers");
-					break;
+					case 1:
+					{
+						Display_Questions("basic_knowledge/questions");
+						StartTest("basic_knowledge/answers");
+						break;
+					}
+					case 2:
+					{
+						Display_Questions("mathematics/questions");
+						StartTest("mathematics/answers");
+						break;
+					}
+					case 3:
+					{
+						Display_Questions("football/questions");
+						StartTest("football/answers");
+						break;
+					}
+					case 4:
+					{
+						Display_Questions("biology/questions");
+						StartTest("biology/answers");
+						break;
+					}
 				}
 			}
 		}
+		}
+	}
 	}
 }
