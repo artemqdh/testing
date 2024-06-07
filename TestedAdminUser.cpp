@@ -24,7 +24,7 @@ void Display_Questions(std::string questions_folder) // Displays questions from 
 		{
 			std::cout << line << std::endl;
 			++num;
-			if (!(num&1)) // endl if num is 1,3,5,7,9 and no endl if 2,4,6,8
+			if (!(num & 1)) // endl if num is 1,3,5,7,9 and no endl if 2,4,6,8
 			{
 				std::cout << std::endl;
 			}
@@ -84,7 +84,7 @@ void StartTest(std::string answers_folder) // start test + statistic in %
 class Test
 {
 public:
-	Test(std::string name_file_test_question1, std::string name_file_test_answer1,std::string correct_answer1, std::string category1)
+	Test(std::string name_file_test_question1, std::string name_file_test_answer1, std::string correct_answer1, std::string category1)
 	{
 		name_file_test_question = name_file_test_question1;
 		name_file_test_answer = name_file_test_answer1;
@@ -117,7 +117,7 @@ public:
 	{
 		bool isEmptyFile = !std::filesystem::exists(name_login_pass_file) || std::filesystem::is_empty(name_login_pass_file);
 		std::ofstream file1(name_login_pass_file, std::ios::app);
-		
+
 		if (file1.is_open())
 		{
 			if (isEmptyFile)
@@ -131,7 +131,7 @@ public:
 			}
 		}
 	}
-	
+
 	bool Check()
 	{
 		std::cout << "Login and password: ";
@@ -183,7 +183,7 @@ public:
 			return false;
 		}
 	}
-	
+
 	bool Check_pass(std::string pass1) override
 	{
 		std::ifstream file1(name_login_pass_file);
@@ -225,7 +225,7 @@ public:
 		return a;
 	}
 
-	void Add_Test() 
+	void Add_Test()
 	{
 		std::cout << "Enter the new category: ";
 		std::string new_category;
@@ -241,7 +241,7 @@ public:
 
 		int question_number = 1;
 
-		for (int i = 0; i < num_questions; ++i) 
+		for (int i = 0; i < num_questions; ++i)
 		{
 			std::cout << "Enter the new question: ";
 			std::string new_question;
@@ -261,19 +261,20 @@ public:
 			std::ofstream question_file(question_filename);
 			std::ofstream answer_file(answer_filename);
 
-			if (question_file.is_open() && answer_file.is_open()) 
+			if (question_file.is_open() && answer_file.is_open())
 			{
 				question_file << new_question << std::endl;
 				question_file << new_answers << std::endl;
 				answer_file << correct_answer << std::endl;
 				std::cout << "Question and answer was successfully added." << std::endl;
 			}
-			else 
+			else
 			{
 				std::cout << "Error. File is not open." << std::endl;
 			}
 			++question_number; // question1 -> question2 // answer1 -> answer2
 		}
+		std::cout << "Dont forget to add the Test to the main part." << std::endl;
 	}
 
 	void Delete_Test()
@@ -292,7 +293,7 @@ public:
 		}
 	}
 
-	void Delete_Tested() 
+	void Delete_Tested()
 	{
 		std::cout << "Who do you want to delete? (name_family)" << std::endl;
 		std::string name1;
@@ -301,17 +302,17 @@ public:
 		std::string name_file = "all_users/" + name1 + ".txt";
 		std::string login_file = "all_users/login_" + name1 + ".txt";
 
-		if (std::filesystem::exists(name_file)) 
+		if (std::filesystem::exists(name_file))
 		{
 			std::filesystem::remove(name_file);
 			std::cout << name1 << " was successfully deleted." << std::endl;	// for example: deleted artem_galimov.txt
 		}
-		else 
+		else
 		{
 			std::cout << "Error. " << name1 << " does not exist." << std::endl;
 		}
 
-		if (std::filesystem::exists(login_file)) 
+		if (std::filesystem::exists(login_file))
 		{
 			std::filesystem::remove(login_file);
 			std::cout << "login_" << name1 << " was successfully deleted." << std::endl;	// for example: deleted login_artem_galimov.txt
@@ -362,7 +363,7 @@ public:
 			file2 << name1 << " " << adress1 << " " << phonenum1;
 			file2.close();
 		}
-		
+
 		std::ofstream file1("all_users/login_" + name1 + ".txt", std::ios::app); // all_users = folder // example = all_users/login_artem_galimov.txt
 		if (file1.is_open())
 		{
@@ -522,7 +523,7 @@ int main()
 {
 	Admin b;
 	Tested a("a.txt", "b.txt", "c.txt", "d.txt");
-	
+
 	std::cout << "Welcome" << std::endl;
 
 	std::cout << "Where do you want to login? 1 - Admin, 2 - Tested" << std::endl;
@@ -539,24 +540,24 @@ int main()
 		std::cout << "1 - Add Test\n2 - Delete Test\n3 - Delete Tested" << std::endl;
 		int num5 = 0;
 		std::cin >> num5;
-		
+
 		switch (num5)
 		{
-			case 1:
-			{
-				b.Add_Test();
-				break;
-			}
-			case 2:
-			{
-				b.Delete_Test();
-				break;
-			}
-			case 3:
-			{
-				b.Delete_Tested();
-				break;
-			}
+		case 1:
+		{
+			b.Add_Test();
+			break;
+		}
+		case 2:
+		{
+			b.Delete_Test();
+			break;
+		}
+		case 3:
+		{
+			b.Delete_Tested();
+			break;
+		}
 		}
 		break;
 	}
@@ -578,36 +579,30 @@ int main()
 			if (a.Check())
 			{
 				std::cout << "What test do you want to start?" << std::endl;
-				std::cout << "1 - basic_knowledge, 2 - mathematics, 3 - football and 4 - biology" << std::endl;
+				std::cout << "1 - basic_knowledge, 2 - mathematics, 3 - football" << std::endl;
 				int num = 0;
 				std::cin >> num;
 				system("cls");
 				switch (num)
 				{
-					case 1:
-					{
-						Display_Questions("basic_knowledge/questions");
-						StartTest("basic_knowledge/answers");
-						break;
-					}
-					case 2:
-					{
-						Display_Questions("mathematics/questions");
-						StartTest("mathematics/answers");
-						break;
-					}
-					case 3:
-					{
-						Display_Questions("football/questions");
-						StartTest("football/answers");
-						break;
-					}
-					case 4:
-					{
-						Display_Questions("biology/questions");
-						StartTest("biology/answers");
-						break;
-					}
+				case 1:
+				{
+					Display_Questions("basic_knowledge/questions");
+					StartTest("basic_knowledge/answers");
+					break;
+				}
+				case 2:
+				{
+					Display_Questions("mathematics/questions");
+					StartTest("mathematics/answers");
+					break;
+				}
+				case 3:
+				{
+					Display_Questions("football/questions");
+					StartTest("football/answers");
+					break;
+				}
 				}
 			}
 		}
